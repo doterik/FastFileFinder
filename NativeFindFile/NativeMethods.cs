@@ -25,6 +25,13 @@ namespace NativeFindFile
 			SearchLimitToDevices = 2
 		}
 
+		internal enum FindExAdditionalFlags
+		{
+			None = 0,
+			CaseSensitive = 1,
+			LargeFetch = 2
+		}
+
 		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
 		internal struct WIN32_FIND_DATA
 		{
@@ -42,13 +49,6 @@ namespace NativeFindFile
 			public String cAlternateFileName;
 		}
 
-		internal enum FindExAdditionalFlags
-		{
-			None = 0,
-			CaseSensitive = 1,
-			LargeFetch = 2
-		}
-
 		[DllImport("kernel32.dll", SetLastError = false, CharSet = CharSet.Unicode)]
 		[return: MarshalAs(UnmanagedType.Bool)]
 		internal static extern Boolean FindClose(IntPtr hFindFile);
@@ -64,7 +64,5 @@ namespace NativeFindFile
 		[DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "FindNextFileW")]
 		[return: MarshalAs(UnmanagedType.Bool)]
 		internal static extern Boolean FindNextFile(SafeFindFileHandle hFindFile, out WIN32_FIND_DATA lpFindFileData);
-
-
 	}
 }

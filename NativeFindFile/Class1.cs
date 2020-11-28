@@ -1,8 +1,8 @@
-﻿using System;
-
-namespace NativeFindFile
+﻿namespace NativeFindFile
 {
-    public class Class1
-    {
-    }
+	using System;
+
+	public class Class1
+	{
+	}
 }

@@ -1,0 +1,64 @@
+﻿[*.cs]
+
+# SA1005: Single line comments should begin with single space
+dotnet_diagnostic.SA1005.severity = none
+
+# SA1027: Use tabs correctly
+dotnet_diagnostic.SA1027.severity = none
+
+# SA1101: Prefix local calls with this
+dotnet_diagnostic.SA1101.severity = none
+
+# SA1116: Split parameters should start on line after declaration
+dotnet_diagnostic.SA1116.severity = silent
+
+# SA1121: Use built-in type alias
+dotnet_diagnostic.SA1121.severity = none
+
+# SA1128: Put constructor initializers on their own line
+dotnet_diagnostic.SA1128.severity = silent
+
+# SA1201: Elements should appear in the correct order
+dotnet_diagnostic.SA1201.severity = silent
+
+# SA1202: Elements should be ordered by access
+dotnet_diagnostic.SA1202.severity = silent
+
+# SA1214: Readonly fields should appear before non-readonly fields
+dotnet_diagnostic.SA1214.severity = silent
+
+# SA1413: Use trailing comma in multi-line initializers
+dotnet_diagnostic.SA1413.severity = silent
+
+# SA1500: Braces for multi-line statements should not share line
+dotnet_diagnostic.SA1500.severity = silent
+
+# SA1502: Element should not be on a single line
+dotnet_diagnostic.SA1502.severity = silent
+
+# SA1506: Element documentation headers should not be followed by blank line
+dotnet_diagnostic.SA1506.severity = suggestion
+
+# SA1512: Single-line comments should not be followed by blank line
+dotnet_diagnostic.SA1512.severity = silent
+
+# SA1515: Single-line comment should be preceded by blank line
+dotnet_diagnostic.SA1515.severity = silent
+
+# SA1600: Elements should be documented
+dotnet_diagnostic.SA1600.severity = silent
+
+# SA1602: Enumeration items should be documented
+dotnet_diagnostic.SA1602.severity = silent
+
+# SA1629: Documentation text should end with a period
+dotnet_diagnostic.SA1629.severity = suggestion
+
+# SA1633: File should have header
+dotnet_diagnostic.SA1633.severity = silent
+
+# SA1636: File header copyright text should match
+dotnet_diagnostic.SA1636.severity = silent
+
+# SA1642: Constructor summary documentation should begin with standard text
+dotnet_diagnostic.SA1642.severity = suggestion
