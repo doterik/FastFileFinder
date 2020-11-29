@@ -1,8 +1,8 @@
 //#pragma warning disable IDE0003 // Remove qualification
-//#pragma warning disable IDE0007 // Use implicit type
+#pragma warning disable IDE0007 // Use implicit type
 //#pragma warning disable IDE0049 // Simplify Names
-//#pragma warning disable SA1629 // Documentation text should end with a period
-//#pragma warning disable SA1642 // Constructor summary documentation should begin with standard text
+#pragma warning disable SA1629 // Documentation text should end with a period
+#pragma warning disable SA1642 // Constructor summary documentation should begin with standard text
 
 //------------------------------------------------------------------------------
 // <copyright file="ArgParser.cs" company="Wintellect">
@@ -43,13 +43,13 @@ namespace NativeFindFile
 		private readonly char[] switchChars;
 
 		/// <summary>Switch character(s) that are simple flags.</summary>
-		private readonly String[] flagSymbols;
+		private readonly string[] flagSymbols;
 
 		/// <summary>Switch characters(s) that take parameters. For example: -f file. This can be null if not needed.</summary>
-		private readonly String[] dataSymbols;
+		private readonly string[] dataSymbols;
 
 		/// <summary>Are switches case-sensitive?</summary>
-		private readonly Boolean caseSensitiveSwitches;
+		private readonly bool caseSensitiveSwitches;
 
 		/// <summary>Initializes a new instance of the ArgParser class and defaults to
 		/// "/" and "-" as the only valid switch characters.</summary>
@@ -61,7 +61,7 @@ namespace NativeFindFile
 		//			  	   "CA1726:UsePreferredTerms",
 		//				   MessageId = "flag",
 		//	  			   Justification = "Flag is appropriate term when dealing with command line arguments.")]
-		protected ArgParser(String[] flagSymbols, String[] dataSymbols, Boolean caseSensitiveSwitches) : this(flagSymbols,
+		protected ArgParser(string[] flagSymbols, string[] dataSymbols, bool caseSensitiveSwitches) : this(flagSymbols,
 																											  dataSymbols,
 																											  caseSensitiveSwitches,
 																											  new[] { '/', '-' })
@@ -77,9 +77,9 @@ namespace NativeFindFile
 		//				   "CA1726:UsePreferredTerms",
 		//				   MessageId = "flag",
 		//				   Justification = "Flag is appropriate term when dealing with command line arguments.")]
-		protected ArgParser(String[] flagSymbols,
-							String[] dataSymbols,
-							Boolean caseSensitiveSwitches,
+		protected ArgParser(string[] flagSymbols,
+							string[] dataSymbols,
+							bool caseSensitiveSwitches,
 							char[] switchChars)
 		{
 			Debug.Assert(flagSymbols != null, "null != flagSymbols");
@@ -115,53 +115,53 @@ namespace NativeFindFile
 
 		/// <summary>Reports correct command line usage.</summary>
 		/// <param name="errorInfo">The string with the invalid command line option.</param>
-		public abstract void OnUsage(String? errorInfo); // TODO Null?
+		public abstract void OnUsage(string? errorInfo); // TODO Null?
 
 		/// <summary>Parses an arbitrary set of arguments.</summary>
 		/// <param name="args">The string array to parse through.</param>
 		/// <returns>True if parsing was correct.</returns>
 		/// <exception cref="ArgumentException"> Thrown if <paramref name="args"/> is null.</exception>
-		public Boolean Parse(String[] args)
+		public bool Parse(string[] args)
 		{
-			SwitchStatus ss = SwitchStatus.NoError; // Assume parsing is successful.
+			var ss = SwitchStatus.NoError; // Assume parsing is successful.
 
 			Debug.Assert(args != null, "null != args");
 			_ = args ?? throw new ArgumentException(Constants.InvalidParameter);
 
 			if (args.Length == 0) ss = SwitchStatus.ShowUsage; // Handle the easy case of no arguments.
 
-			Int32 errorArg = -1;
-			Int32 currArg;
+			var errorArg = -1;
+			int currArg;
 			for (currArg = 0; (ss == SwitchStatus.NoError) && (currArg < args.Length); currArg++)
 			{
 				errorArg = currArg;
 
-				Boolean isSwitch = this.StartsWithSwitchChar(args[currArg]); // Determine if this argument starts with a valid switch character.
+				var isSwitch = StartsWithSwitchChar(args[currArg]); // Determine if this argument starts with a valid switch character.
 
-				if (!isSwitch) ss = this.OnNonSwitch(args[currArg]); // This is not a switch, notified the derived class of this "non-switch value".
+				if (!isSwitch) ss = OnNonSwitch(args[currArg]); // This is not a switch, notified the derived class of this "non-switch value".
 				else
 				{
-					Boolean useDataSymbols = false; // Indicates the symbol is a data symbol.
+					var useDataSymbols = false; // Indicates the symbol is a data symbol.
 
-					String processedArg = args[currArg][1..]; // Get the argument itself.
-					Int32 n = this.IsSwitchInArray(this.flagSymbols, processedArg);
+					var processedArg = args[currArg][1..]; // Get the argument itself.
+					int n = IsSwitchInArray(flagSymbols, processedArg);
 
-					if ((n == -1) && (this.dataSymbols != null)) // If it's not in the flags array, try the data array if that array is not null.
+					if ((n == -1) && (dataSymbols != null)) // If it's not in the flags array, try the data array if that array is not null.
 					{
-						n = this.IsSwitchInArray(this.dataSymbols, processedArg);
+						n = IsSwitchInArray(dataSymbols, processedArg);
 						useDataSymbols = true;
 					}
 
 					if (n != -1)
 					{
-						String theSwitch;
-						String? dataValue = null;
+						string theSwitch;
+						string? dataValue = null;
 
 						// If it's a flag switch.
-						if (!useDataSymbols) theSwitch = this.flagSymbols[n]; // This is a legal switch, notified the derived class of this switch and its value.
+						if (!useDataSymbols) theSwitch = flagSymbols[n]; // This is a legal switch, notified the derived class of this switch and its value.
 						else
 						{
-							theSwitch = this.dataSymbols is not null ? this.dataSymbols[n] : String.Empty; // TODO: Empty?
+							theSwitch = dataSymbols is not null ? dataSymbols[n] : string.Empty; // TODO: Empty?
 
 							if (currArg + 1 < args.Length) // Look at the next parameter if it's there.
 							{
@@ -169,7 +169,7 @@ namespace NativeFindFile
 
 								// Take a look at dataValue to see if it starts with a switch character.
 								// If it does, that means this data argument is empty.
-								if (this.StartsWithSwitchChar(dataValue))
+								if (StartsWithSwitchChar(dataValue))
 								{
 									ss = SwitchStatus.Error;
 									break;
@@ -182,7 +182,7 @@ namespace NativeFindFile
 							}
 						}
 
-						ss = this.OnSwitch(theSwitch, dataValue);
+						ss = OnSwitch(theSwitch, dataValue);
 					}
 					else
 					{
@@ -193,15 +193,15 @@ namespace NativeFindFile
 			}
 
 			// Finished parsing arguments
-			if (ss == SwitchStatus.NoError) ss = this.OnDoneParse(); // No error occurred while parsing, let derived class perform a sanity check and return an appropriate status
+			if (ss == SwitchStatus.NoError) ss = OnDoneParse(); // No error occurred while parsing, let derived class perform a sanity check and return an appropriate status
 
-			if (ss == SwitchStatus.ShowUsage) this.OnUsage(null); // Status indicates that usage should be shown, show it
+			if (ss == SwitchStatus.ShowUsage) OnUsage(null); // Status indicates that usage should be shown, show it
 
 			if (ss == SwitchStatus.Error)
 			{
-				String? errorValue = (errorArg != -1) && (errorArg != args.Length) ? args[errorArg] : null;
+				var errorValue = (errorArg != -1) && (errorArg != args.Length) ? args[errorArg] : null;
 
-				this.OnUsage(errorValue); // Status indicates that an error occurred, show it and the proper usage
+				OnUsage(errorValue); // Status indicates that an error occurred, show it and the proper usage
 			}
 
 			return ss == SwitchStatus.NoError; // Return whether all parsing was successful.
@@ -212,7 +212,7 @@ namespace NativeFindFile
 		/// <param name="switchValue">The value of the switch. For flag switches this is null/Nothing.</param>
 		/// <returns>One of the <see cref="SwitchStatus" /> values.</returns>
 		/// <remarks>Every derived class must implement an OnSwitch method or a switch is considered an error.</remarks>
-		protected virtual SwitchStatus OnSwitch(String switchSymbol, String? switchValue) => SwitchStatus.Error; // TODO Null?
+		protected virtual SwitchStatus OnSwitch(string switchSymbol, string? switchValue) => SwitchStatus.Error; // TODO Null?
 
 		/// <summary>Called when a non-switch value is parsed out.</summary>
 		/// <param name="value">The value parsed out.</param>
@@ -242,12 +242,12 @@ namespace NativeFindFile
 		/// <summary>Looks to see if this string starts with a switch character.</summary>
 		/// <param name="value">The string to check.</param>
 		/// <returns>True if the string starts with a switch character.</returns>
-		private Boolean StartsWithSwitchChar1(String value)
+		private bool StartsWithSwitchChar1(string value)
 		{
-			Boolean isSwitch = false;
-			for (Int32 n = 0; !isSwitch && (n < this.switchChars.Length); n++) // TODO: foreach!
+			var isSwitch = false;
+			for (int n = 0; !isSwitch && (n < switchChars.Length); n++) // TODO: foreach!
 			{
-				if (String.CompareOrdinal(value, 0, $"{this.switchChars[n]}", 0, 1) == 0)
+				if (string.CompareOrdinal(value, 0, $"{switchChars[n]}", 0, 1) == 0)
 				{
 					isSwitch = true; // TODO: Return!
 					break;

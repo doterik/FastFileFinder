@@ -7,7 +7,7 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 #pragma warning disable IDE0007 // Use implicit type
-#pragma warning disable IDE0049 // Simplify Names
+//#pragma warning disable IDE0049 // Simplify Names
 #pragma warning disable IDE0063 // Use simple 'using' statement
 
 namespace NativeFindFile
@@ -26,7 +26,7 @@ namespace NativeFindFile
 	/// <summary>
 	/// The entry point to the application.
 	/// </summary>
-	internal sealed class Program
+	public sealed class Program // internal
 	{
 		/// <summary>
 		/// Holds the command line options the user wanted.
@@ -36,37 +36,37 @@ namespace NativeFindFile
 		/// <summary>
 		/// The total number of matching files and directories.
 		/// </summary>
-		private static Int64 totalMatches;
+		private static long totalMatches;
 
 		/// <summary>
 		/// The total number of bytes the matching file consume.
 		/// </summary>
-		private static Int64 totalMatchesSize;
+		private static long totalMatchesSize;
 
 		/// <summary>
 		/// The total number of files looked at.
 		/// </summary>
-		private static Int64 totalFiles;
+		private static long totalFiles;
 
 		/// <summary>
 		/// The total number of directories looked at.
 		/// </summary>
-		private static Int64 totalDirectories;
+		private static long totalDirectories;
 
 		/// <summary>
 		/// The total number of reparse points.
 		/// </summary>
-		private static Int64 totalReparses;
+		private static long totalReparses;
 
 		/// <summary>
 		/// The total number of bytes the files looked at consume.
 		/// </summary>
-		private static Int64 totalSize;
+		private static long totalSize;
 
 		/// <summary>
 		/// The collection to hold found strings so they can be printed in batch mode.
 		/// </summary>
-		private static readonly BlockingCollection<String> ResultsQueue = new();
+		private static readonly BlockingCollection<string> ResultsQueue = new();
 
 		/// <summary>
 		/// The entry point function for the program.
@@ -78,9 +78,9 @@ namespace NativeFindFile
 		/// 0 - Proper execution
 		/// 1 - Invalid command line.
 		/// </returns>
-		internal static Int32 Main(String[] args)
+		public static int Main(string[] args) // internal
 		{
-			Int32 returnValue = 0;
+			int returnValue = 0;
 
 			//totalMatches = 0;
 			//totalMatchesSize = 0;
@@ -89,23 +89,24 @@ namespace NativeFindFile
 			//totalReparses = 0;
 			//totalSize = 0;
 
-			Stopwatch timer = Stopwatch.StartNew(); // Have to include the time for parsing and creating the regular expressions.
+			var timer = Stopwatch.StartNew(); // Have to include the time for parsing and creating the regular expressions.
 
-			Boolean parsed = Options.Parse(args);
+			var parsed = Options.Parse(args);
 
 			if (parsed)
 			{
-				CancellationTokenSource canceller = new CancellationTokenSource();
+				using (var canceller = new CancellationTokenSource())
+				{
+					// Fire up the searcher and batch output threads.
+					var task = Task.Factory.StartNew(() => RecurseFiles(Options.Path));
+					var resultsTask = Task.Factory.StartNew(() => WriteResultsBatched(canceller.Token, 200));
 
-				// Fire up the searcher and batch output threads.
-				var task = Task.Factory.StartNew(() => RecurseFiles(Options.Path));
-				var resultsTask = Task.Factory.StartNew(() => WriteResultsBatched(canceller.Token, 200));
+					task.Wait();
 
-				task.Wait();
-
-				// Indicate a cancel so all remaining strings get printed out.
-				canceller.Cancel();
-				resultsTask.Wait();
+					// Indicate a cancel so all remaining strings get printed out.
+					canceller.Cancel();
+					resultsTask.Wait();
+				}
 
 				timer.Stop();
 
@@ -136,7 +137,7 @@ namespace NativeFindFile
 		/// <param name="args">
 		/// Any additional items to include in the output.
 		/// </param>
-		internal static void WriteError(String message, params Object[] args) => ColorWriteLine(ConsoleColor.Red, message, args);
+		internal static void WriteError(string message, params object[] args) => ColorWriteLine(ConsoleColor.Red, message, args);
 
 		/// <summary>
 		/// Writes an error message to the screen.
@@ -144,7 +145,7 @@ namespace NativeFindFile
 		/// <param name="message">
 		/// The message to write.
 		/// </param>
-		internal static void WriteError(String message) => ColorWriteLine(ConsoleColor.Red, message, null);
+		internal static void WriteError(string message) => ColorWriteLine(ConsoleColor.Red, message, null);
 
 		/// <summary>
 		/// Writes the text out in the specified foreground color.
@@ -158,7 +159,7 @@ namespace NativeFindFile
 		/// <param name="args">
 		/// Optional insertion arguments.
 		/// </param>
-		private static void ColorWriteLine(ConsoleColor color, String message, params Object[]? args)
+		private static void ColorWriteLine(ConsoleColor color, string message, params object[]? args)
 		{
 			ConsoleColor currForeground = Console.ForegroundColor;
 			try
@@ -182,9 +183,9 @@ namespace NativeFindFile
 		/// <summary>Checks to see if the name matches and of the patterns.</summary>
 		/// <param name="name">The name to match.</param>
 		/// <returns>True if yes, false otherwise.</returns>
-		private static Boolean IsNameMatch(String name)
+		private static bool IsNameMatch(string name)
 		{
-			for (Int32 i = 0; i < Options.Patterns.Count; i++)
+			for (int i = 0; i < Options.Patterns.Count; i++)
 			{
 				if (Options.Patterns[i].IsMatch(name))
 				{
@@ -198,7 +199,7 @@ namespace NativeFindFile
 		/// <summary>Takes care of writing out results found in a batch manner so slow calls to Console.WriteLine are minimized.</summary>
 		/// <param name="canceller">The cancellation token.</param>
 		/// <param name="batchSize">The batch size for the number of lines to write.</param>
-		private static void WriteResultsBatched(CancellationToken canceller, Int32 batchSize = 10)
+		private static void WriteResultsBatched(CancellationToken canceller, int batchSize = 10)
 		{
 			var sb = new StringBuilder(batchSize * 260);
 			var lineCount = 0;
@@ -233,14 +234,14 @@ namespace NativeFindFile
 
 		/// <summary>The method to call when a matching file/directory is found.</summary>
 		/// <param name="line">The matching item to add to the output queue.</param>
-		private static void QueueConsoleWriteLine(String line) => ResultsQueue.Add(line);
+		private static void QueueConsoleWriteLine(string line) => ResultsQueue.Add(line);
 
 		/// <summary>The main method that does the recursive file matching.</summary>
 		/// <param name="directory">The file directory to search.</param>
 		/// <remarks>This method calls the low level Windows API because the built in .NET APIs do not support long file names. (Those greater than 260 characters).</remarks>
-		private static void RecurseFiles(String directory)
+		private static void RecurseFiles(string directory)
 		{
-			String fileName = directory.StartsWith(@"\\")
+			string fileName = directory.StartsWith(@"\\")
 				? directory.Replace(@"\\", @"\\?\UNC\") + @"\*" // TODO: Replace all occurrences?
 				: @"\\?\" + directory + @"\*";
 
@@ -269,7 +270,7 @@ namespace NativeFindFile
 								continue;
 							}
 
-							String subDirectory = directory + "\\" + findFileData.cFileName; // No need for 'Path.Combine()'.
+							string subDirectory = directory + "\\" + findFileData.cFileName; // No need for 'Path.Combine()'.
 							if (Options.IncludeDirectories)
 							{
 								if (IsNameMatch(findFileData.cFileName))
@@ -285,14 +286,14 @@ namespace NativeFindFile
 						{
 							Interlocked.Increment(ref totalFiles);
 
-							Int64 fileSize = ((Int64)findFileData.nFileSizeHigh << 32) + findFileData.nFileSizeLow;
+							long fileSize = ((long)findFileData.nFileSizeHigh << 32) + findFileData.nFileSizeLow;
 							Interlocked.Add(ref totalSize, fileSize);
 
-							String fullFile = directory.EndsWith("\\") // No need for 'Path.Combine()'.
+							string fullFile = directory.EndsWith("\\") // No need for 'Path.Combine()'.
 								? directory + findFileData.cFileName
 								: directory + "\\" + findFileData.cFileName;
 
-							String matchName = Options.IncludeDirectories ? fullFile : findFileData.cFileName;
+							string matchName = Options.IncludeDirectories ? fullFile : findFileData.cFileName;
 
 							if (IsNameMatch(matchName))
 							{

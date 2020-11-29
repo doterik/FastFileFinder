@@ -1,6 +1,6 @@
-﻿#pragma warning disable IDE0003 // Remove qualification
+﻿//#pragma warning disable IDE0003 // Remove qualification
 #pragma warning disable IDE0007 // Use implicit type
-#pragma warning disable IDE0049 // Simplify Names
+//#pragma warning disable IDE0049 // Simplify Names
 
 // --------------------------------------------------------------------------------------------------------------------
 // <copyright file="FastFindArgumentParser.cs" company="John Robbins/Wintellect">
@@ -30,65 +30,65 @@ namespace NativeFindFile
 		/// <summary>
 		/// The path flag.
 		/// </summary>
-		private const String PathFlag = "path";
+		private const string PathFlag = "path";
 
 		/// <summary>
 		/// The path flag short.
 		/// </summary>
-		private const String PathFlagShort = "p";
+		private const string PathFlagShort = "p";
 
 		/// <summary>
 		/// The use regular expressions flag.
 		/// </summary>
-		private const String RegExFlag = "regex";
+		private const string RegExFlag = "regex";
 
 		/// <summary>
 		/// The short use regular expressions flag.
 		/// </summary>
-		private const String RegExFlagShort = "re";
+		private const string RegExFlagShort = "re";
 
 		/// <summary>
 		/// The only files flag.
 		/// </summary>
-		private const String IncludeDirectoryName = "includedir";
+		private const string IncludeDirectoryName = "includedir";
 
 		/// <summary>
 		/// The short only files flag short.
 		/// </summary>
-		private const String IncludeDirectoryNameShort = "i";
+		private const string IncludeDirectoryNameShort = "i";
 
 		/// <summary>
 		/// The no statistics flag.
 		/// </summary>
-		private const String NoStats = "nostats";
+		private const string NoStats = "nostats";
 
 		/// <summary>
 		/// The short no stats flag.
 		/// </summary>
-		private const String NoStatsShort = "ns";
+		private const string NoStatsShort = "ns";
 
 		/// <summary>
 		/// The help flag.
 		/// </summary>
-		private const String HelpFlag = "help";
+		private const string HelpFlag = "help";
 
 		/// <summary>
 		/// The short help flag.
 		/// </summary>
-		private const String HelpFlagShort = "?";
+		private const string HelpFlagShort = "?";
 
 		/// <summary>
 		/// The raw patterns as they come in from the command line.
 		/// </summary>
-		private readonly List<String> rawPatterns = new();
+		private readonly List<string> rawPatterns = new();
 
 		/// <summary>
 		/// The private string to hold more detailed error information.
 		/// </summary>
-		private String errorMessage = String.Empty;
+		private string errorMessage = string.Empty;
 
 		/// <summary>Wheter to use regular expressions or not.</summary>
-		private Boolean useRegEx;
+		private bool useRegEx;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="FastFindArgumentParser"/> class.
@@ -111,19 +111,19 @@ namespace NativeFindFile
 		/// <summary>
 		/// Gets the path to search. The default is the current directory.
 		/// </summary>
-		public String Path { get; private set; } = String.Empty;
+		public string Path { get; private set; } = string.Empty;
 
 		/// <summary>
 		/// Gets a value indicating whether the user only wants to include the
 		/// directory name as part of the search.
 		/// </summary>
-		public Boolean IncludeDirectories { get; private set; }
+		public bool IncludeDirectories { get; private set; }
 
 		/// <summary>
 		/// Gets a value indicating whether the user wants to see the final
 		/// search stats.
 		/// </summary>
-		public Boolean NoStatistics { get; private set; }
+		public bool NoStatistics { get; private set; }
 
 		/// <summary>
 		/// Gets the patterns to search for.
@@ -136,13 +136,13 @@ namespace NativeFindFile
 		/// <param name="errorInfo">
 		/// The string with the invalid command line option.
 		/// </param>
-		public override void OnUsage(String? errorInfo)
+		public override void OnUsage(string? errorInfo)
 		{
 			ProcessModule exe = Process.GetCurrentProcess().Modules[0];
 			Console.WriteLine(Constants.UsageString, exe.FileVersionInfo.FileVersion);
 
-			if (!String.IsNullOrEmpty(errorInfo)) Program.WriteError(Constants.ErrorSwitch, errorInfo);
-			if (!String.IsNullOrEmpty(this.errorMessage)) Program.WriteError(this.errorMessage);
+			if (!string.IsNullOrEmpty(errorInfo)) Program.WriteError(Constants.ErrorSwitch, errorInfo);
+			if (!string.IsNullOrEmpty(errorMessage)) Program.WriteError(errorMessage);
 		}
 
 		/// <summary>
@@ -157,9 +157,9 @@ namespace NativeFindFile
 		/// <returns>
 		/// One of the <see cref="ArgParser.SwitchStatus"/> values.
 		/// </returns>
-		protected override SwitchStatus OnSwitch(String switchSymbol, String? switchValue)
+		protected override SwitchStatus OnSwitch(string switchSymbol, string? switchValue)
 		{
-			SwitchStatus ss = SwitchStatus.NoError;
+			var ss = SwitchStatus.NoError;
 
 			switch (switchSymbol)
 			{
@@ -167,20 +167,20 @@ namespace NativeFindFile
 				case PathFlagShort: ss = TestPath(switchValue); break;
 
 				case RegExFlag:
-				case RegExFlagShort: this.useRegEx = true; break;
+				case RegExFlagShort: useRegEx = true; break;
 
 				case IncludeDirectoryName:
-				case IncludeDirectoryNameShort: this.IncludeDirectories = true; break;
+				case IncludeDirectoryNameShort: IncludeDirectories = true; break;
 
 				case NoStats:
-				case NoStatsShort: this.NoStatistics = true; break;
+				case NoStatsShort: NoStatistics = true; break;
 
 				case HelpFlag:
 				case HelpFlagShort: ss = SwitchStatus.ShowUsage; break;
 
 				default:
 					ss = SwitchStatus.Error;
-					this.errorMessage = Constants.UnknownCommandLineOption;
+					errorMessage = Constants.UnknownCommandLineOption;
 					break;
 			}
 
@@ -190,9 +190,9 @@ namespace NativeFindFile
 		/// <summary>Called when a non-switch value is parsed out.</summary>
 		/// <param name="value">The value parsed out.</param>
 		/// <returns>One of the <see cref="ArgParser.SwitchStatus"/> values.</returns>
-		protected override SwitchStatus OnNonSwitch(String value)
+		protected override SwitchStatus OnNonSwitch(string value)
 		{
-			this.rawPatterns.Add(value); // Just add this to the list of patterns to search for.
+			rawPatterns.Add(value); // Just add this to the list of patterns to search for.
 			return SwitchStatus.NoError;
 		}
 
@@ -200,34 +200,34 @@ namespace NativeFindFile
 		/// <returns>One of the <see cref="ArgParser.SwitchStatus"/> values.</returns>
 		protected override SwitchStatus OnDoneParse()
 		{
-			SwitchStatus ss = SwitchStatus.NoError;
+			var ss = SwitchStatus.NoError;
 
-			if (String.IsNullOrEmpty(this.Path)) this.Path = Directory.GetCurrentDirectory();
+			if (string.IsNullOrEmpty(Path)) Path = Directory.GetCurrentDirectory();
 
-			if (this.rawPatterns.Count == 0) // The only error we can have is no patterns.
+			if (rawPatterns.Count == 0) // The only error we can have is no patterns.
 			{
-				this.errorMessage = Constants.NoPatternsSpecified;
+				errorMessage = Constants.NoPatternsSpecified;
 				ss = SwitchStatus.Error;
 			}
 			else
 			{
-				for (Int32 i = 0; i < this.rawPatterns.Count; i++) // Convert all the raw patterns into regular expressions.
+				for (int i = 0; i < rawPatterns.Count; i++) // Convert all the raw patterns into regular expressions.
 				{
-					String thePattern = this.useRegEx
-						? this.rawPatterns[i]
-						: $"^{Regex.Escape(this.rawPatterns[i]).Replace("\\*", ".*").Replace("\\?", ".")}$";
+					var thePattern = useRegEx
+						? rawPatterns[i]
+						: $"^{Regex.Escape(rawPatterns[i]).Replace("\\*", ".*").Replace("\\?", ".")}$";
 					try
 					{
-						Regex r = new Regex(thePattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
-						this.Patterns.Add(r);
+						var rx = new Regex(thePattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
+						Patterns.Add(rx);
 					}
 					catch (ArgumentException e)
 					{
 						// There was an error converting the command line parameter into a regular expression.
 						// This happens when the user specified the -regex switch and they used a DOS wildcard pattern like *..
-						StringBuilder sb = new StringBuilder();
+						var sb = new StringBuilder();
 						sb.AppendFormat(CultureInfo.CurrentCulture, Constants.InvalidRegExFmt, thePattern, e.Message);
-						this.errorMessage = sb.ToString();
+						errorMessage = sb.ToString();
 						ss = SwitchStatus.Error;
 						break;
 					}
@@ -240,13 +240,13 @@ namespace NativeFindFile
 		/// <summary>Isolates the checking for the path parameter.</summary>
 		/// <param name="pathToTest">The path value to test.</param>
 		/// <returns>A valid <see cref="SwitchStatus"/> value.</returns>
-		private SwitchStatus TestPath(String? pathToTest)
+		private SwitchStatus TestPath(string? pathToTest)
 		{
-			if (!String.IsNullOrEmpty(this.Path)) this.errorMessage = Constants.PathMultipleSwitches;
-			else if (!Directory.Exists(pathToTest)) this.errorMessage = Constants.PathNotExist;
+			if (!string.IsNullOrEmpty(Path)) errorMessage = Constants.PathMultipleSwitches;
+			else if (!Directory.Exists(pathToTest)) errorMessage = Constants.PathNotExist;
 			else
 			{
-				this.Path = pathToTest;
+				Path = pathToTest;
 				return SwitchStatus.NoError; // Ok, time to exit.
 			}
 
