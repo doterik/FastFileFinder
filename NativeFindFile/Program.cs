@@ -9,7 +9,6 @@
 #pragma warning disable IDE0007 // Use implicit type
 #pragma warning disable IDE0049 // Simplify Names
 #pragma warning disable IDE0063 // Use simple 'using' statement
-#pragma warning disable SA1312 // Variable names should begin with lower-case letter
 
 namespace NativeFindFile
 {
@@ -55,6 +54,11 @@ namespace NativeFindFile
 		private static Int64 totalDirectories;
 
 		/// <summary>
+		/// The total number of reparse points.
+		/// </summary>
+		private static Int64 totalReparses;
+
+		/// <summary>
 		/// The total number of bytes the files looked at consume.
 		/// </summary>
 		private static Int64 totalSize;
@@ -78,23 +82,20 @@ namespace NativeFindFile
 		{
 			Int32 returnValue = 0;
 
-			Stopwatch timer = new();
+			//totalMatches = 0;
+			//totalMatchesSize = 0;
+			//totalFiles = 0;
+			//totalDirectories = 0;
+			//totalReparses = 0;
+			//totalSize = 0;
 
-			// Have to include the time for parsing and creating the regular
-			// expressions.
-			timer.Start();
+			Stopwatch timer = Stopwatch.StartNew(); // Have to include the time for parsing and creating the regular expressions.
 
 			Boolean parsed = Options.Parse(args);
 
-			totalMatches = 0;
-			totalMatchesSize = 0;
-			totalFiles = 0;
-			totalDirectories = 0;
-			totalSize = 0;
-
 			if (parsed)
 			{
-				var canceller = new CancellationTokenSource();
+				CancellationTokenSource canceller = new CancellationTokenSource();
 
 				// Fire up the searcher and batch output threads.
 				var task = Task.Factory.StartNew(() => RecurseFiles(Options.Path));
@@ -178,15 +179,9 @@ namespace NativeFindFile
 			}
 		}
 
-		/// <summary>
-		/// Checks to see if the name matches and of the patterns.
-		/// </summary>
-		/// <param name="name">
-		/// The name to match.
-		/// </param>
-		/// <returns>
-		/// True if yes, false otherwise.
-		/// </returns>
+		/// <summary>Checks to see if the name matches and of the patterns.</summary>
+		/// <param name="name">The name to match.</param>
+		/// <returns>True if yes, false otherwise.</returns>
 		private static Boolean IsNameMatch(String name)
 		{
 			for (Int32 i = 0; i < Options.Patterns.Count; i++)
@@ -236,12 +231,8 @@ namespace NativeFindFile
 			}
 		}
 
-		/// <summary>
-		/// The method to call when a matching file/directory is found.
-		/// </summary>
-		/// <param name="line">
-		/// The matching item to add to the output queue.
-		/// </param>
+		/// <summary>The method to call when a matching file/directory is found.</summary>
+		/// <param name="line">The matching item to add to the output queue.</param>
 		private static void QueueConsoleWriteLine(String line) => ResultsQueue.Add(line);
 
 		/// <summary>The main method that does the recursive file matching.</summary>
@@ -249,83 +240,76 @@ namespace NativeFindFile
 		/// <remarks>This method calls the low level Windows API because the built in .NET APIs do not support long file names. (Those greater than 260 characters).</remarks>
 		private static void RecurseFiles(String directory)
 		{
-			String lookUpdirectory = String.Empty;
-			if (directory.StartsWith(@"\\", StringComparison.OrdinalIgnoreCase))
-			{
-				lookUpdirectory += directory.Replace(@"\\", @"\\?\UNC\") + "\\*";
-			}
-			else
-			{
-				lookUpdirectory = "\\\\?\\" + directory + "\\*";
-			}
+			String fileName = directory.StartsWith(@"\\")
+				? directory.Replace(@"\\", @"\\?\UNC\") + @"\*" // TODO: Replace all occurrences?
+				: @"\\?\" + directory + @"\*";
 
-			using (SafeFindFileHandle fileHandle = NativeMethods.FindFirstFileEx(lookUpdirectory,
+			using (SafeFindFileHandle fileHandle = NativeMethods.FindFirstFileEx(fileName,
 																				 NativeMethods.FINDEX_INFO_LEVELS.Basic,
-																				 out NativeMethods.WIN32_FIND_DATA WIN32_FIND_DATA,
+																				 out NativeMethods.WIN32_FIND_DATA findFileData,
 																				 NativeMethods.FINDEX_SEARCH_OPS.SearchNameMatch,
 																				 IntPtr.Zero,
-																				 NativeMethods.FindExAdditionalFlags.LargeFetch))
+																				 NativeMethods.FINDEX_ADDITIONAL_FLAGS.LargeFetch))
 			{
 				if (!fileHandle.IsInvalid)
 				{
 					do
 					{
-						// Does this match "." or ".."? If so get out.
-						if (WIN32_FIND_DATA.cFileName.Equals(".", StringComparison.OrdinalIgnoreCase) ||
-							WIN32_FIND_DATA.cFileName.Equals("..", StringComparison.OrdinalIgnoreCase))
-						{
-							continue;
-						}
+						if (findFileData.cFileName.Length <= 2 // Does this match "." or ".."?
+							&& (findFileData.cFileName == "." ||
+								findFileData.cFileName == "..")) continue; // If so, get out.
 
-						// Is this a directory? If so, queue up another task.
-						if ((WIN32_FIND_DATA.dwFileAttributes & FileAttributes.Directory) == FileAttributes.Directory)
+						if ((findFileData.dwFileAttributes & FileAttributes.Directory) == FileAttributes.Directory) // Directory? If so, queue up another task.
 						{
 							Interlocked.Increment(ref totalDirectories);
 
-							String subDirectory = Path.Combine(directory, WIN32_FIND_DATA.cFileName);
+							if ((findFileData.dwFileAttributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint) // Reparse? If so, get out.
+							{
+								Interlocked.Increment(ref totalReparses); // TODO: Move if 'reparse' above directory test !?
+								continue;
+							}
+
+							String subDirectory = directory + "\\" + findFileData.cFileName; // No need for 'Path.Combine()'.
 							if (Options.IncludeDirectories)
 							{
-								if (IsNameMatch(WIN32_FIND_DATA.cFileName))
+								if (IsNameMatch(findFileData.cFileName))
 								{
 									Interlocked.Increment(ref totalMatches);
 									QueueConsoleWriteLine(subDirectory);
 								}
 							}
 
-							// Recurse our way to happiness....
-							Task.Factory.StartNew(() => RecurseFiles(subDirectory), TaskCreationOptions.AttachedToParent);
+							Task.Factory.StartNew(() => RecurseFiles(subDirectory), TaskCreationOptions.AttachedToParent); // Recurse our way to happiness....
 						}
-						else
+						else // It's a file so look at it.
 						{
-							// It's a file so look at it.
 							Interlocked.Increment(ref totalFiles);
 
-							Int64 fileSize = WIN32_FIND_DATA.nFileSizeLow + ((Int64)WIN32_FIND_DATA.nFileSizeHigh << 32);
+							Int64 fileSize = ((Int64)findFileData.nFileSizeHigh << 32) + findFileData.nFileSizeLow;
 							Interlocked.Add(ref totalSize, fileSize);
 
-							String fullFile = directory;
-							if (!directory.EndsWith("\\", StringComparison.OrdinalIgnoreCase))
-							{
-								fullFile += "\\";
-							}
+							String fullFile = directory.EndsWith("\\") // No need for 'Path.Combine()'.
+								? directory + findFileData.cFileName
+								: directory + "\\" + findFileData.cFileName;
 
-							fullFile += WIN32_FIND_DATA.cFileName;
-
-							String matchName = fullFile;
-
-							if (Options.IncludeDirectories == false)
-							{
-								matchName = WIN32_FIND_DATA.cFileName;
-							}
+							String matchName = Options.IncludeDirectories ? fullFile : findFileData.cFileName;
 
 							if (IsNameMatch(matchName))
 							{
-								Interlocked.Increment(ref totalMatches);
 								Interlocked.Add(ref totalMatchesSize, fileSize);
+								Interlocked.Increment(ref totalMatches);
 								QueueConsoleWriteLine(fullFile);
 							}
 						}
-					} while (NativeMethods.FindNextFile(fileHandle, out WIN32_FIND_DATA));
+					} while (NativeMethods.FindNextFile(fileHandle, out findFileData));
+
+					/*	dwError = GetLastError();
+						if (dwError != ERROR_NO_MORE_FILES)
+						{
+							DisplayErrorBox(TEXT("FindFirstFile"));
+						}
+						FindClose(hFind);
+						return dwError; */
 				}
 			}
 		}
